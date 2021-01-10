@@ -18,7 +18,7 @@
     <br />
     <i>thrown together by u/7-hoursbehind</i>
     <br />
-    NB: there's currently a bug that means dates will be one day off for timezones behind GMT+0, but raw dates will be correct. I'll get a fix in soon!
+    NB: bug with dates being off by one day should now be fixed!
 
     <br />
     <br />
@@ -441,7 +441,8 @@
                         weekday: undefined,
                         year: 'numeric',
                         month: 'long',
-                        day: 'numeric'
+                        day: 'numeric',
+                        timeZone: 'UTC'
                     };
                     recording['date_nice'] = date.toLocaleDateString("en-US", options);
                     recording['original_date'] = recording.date;
