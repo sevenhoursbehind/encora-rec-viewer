@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+	<title>Encora Recording Viewer</title>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
@@ -9,22 +10,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ejs@3.1.5/ejs.min.js"></script>
 
-    <title>Encora Recordings Viewer</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Cabin" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://encora.zagon.pe/encora.one/fonts/brandon-grotesque.css">
+    <link rel="stylesheet" type="text/css" href="https://encora.zagon.pe/encora.one/fonts/sk-modernist.css">
+
+    <!-- Styles -->
+    <link id="lightCssId" href="https://encora.zagon.pe/encora.one/css/light.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+        integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" />
+
+    <style type="text/css">
+            </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(
+            function() {
+                $(".dropdown-autocomplete-menu").select2();
+            }
+        );
+    </script>
+
+    </head>
+
+<body>
+    <div id="app">
+
+        
+        <nav class="navbar navbar-expand-md navbar-light bg-light shadow-sm fixed-top">
+
+<div class="container fake-container d-flex flex-nowrap text-nowrap d-md-none"> 
+
+</div>  
+
+<div class="collapse navbar-collapse fake-container" id="navbarSupportedContent">
+    <a class="navbar-brand" href="index.html">
+        encora viewer
+    </a>
+
+    <ul class="navbar-nav mr-auto">
+
+    
+   
+
+    </ul>  
+
+    <ul class="navbar-nav">
+
+    
+    
+    </ul>  
+
+</div>  
+
+</nav>
 </head>
 
 <body>
+  <!-- start main container -->
+  <div class="container">
+    <div class="support">
+      <p class="alert alert-info">
+      <b>Bug with dates being off by one day should now be fixed!</b>
+    </p>
+      </a>
+    </div>
 
-    <b>Encora Recordings Viewer</b>
-    <br />
-    <i>thrown together by u/7-hoursbehind</i>
-    <br />
-    NB: bug with dates being off by one day should now be fixed!
+    <h2>Encora Recordings Viewer</h2>
+    <br/>
 
-    <br />
-    <br />
-
-    <input type="file" id="upload" />
-    <button type="button" id="load" onclick="loadfile()">Load recordings.csv</button>
+    <button type="button" id="load" onclick="loadfile()">Load Recordings!</button>
 
     <br />
     <br />
@@ -54,6 +114,7 @@
     <div id="showResults"></div>
 
     <script>
+		// here's where the magic happens, all thanks to someone who is 7 hours behind.
         var loadedCSV = {};
 
         // searching productions
@@ -145,14 +206,22 @@
                         `;
 
         function loadfile() {
-            //Papa.parse("recordings.csv", {
-            Papa.parse(document.getElementById("upload").files[0], {
-                //                download: true,
+            Papa.parse("https://encora.zagon.pe/recordings_2020-12-31.csv", {
+                                download: true,
                 header: true,
                 encoding: "UTF-8",
                 complete: parseComplete // called when CSV has been converted to JSON
             });
-        }
+      // original offline recorging viewer }
+               // function loadfile() {
+            //Papa.parse("recordings.csv", {
+            // Papa.parse(document.getElementById("upload").files[0], {
+                //                download: true,
+               // header: true,
+               // encoding: "UTF-8",
+               // complete: parseComplete 
+           // });
+        //}
 
         function parseComplete(w) {
             console.log(w);
@@ -186,12 +255,12 @@
 
             var searchTerm = document.getElementById("searchBox").value;
             // remove punctuation from search term
-            searchTerm = searchTerm.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'¡]/gi, '').toLowerCase();
+            searchTerm = searchTerm.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'ยก]/gi, '').toLowerCase();
 
             var productionResults = [];
             for (production of Productions) {
                 if (production) {
-                    var productionNoPunctuation = production.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'¡]/gi, '').toLowerCase();
+                    var productionNoPunctuation = production.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'ยก]/gi, '').toLowerCase();
                     if (productionNoPunctuation.includes(searchTerm)) {
                         productionResults.push(production);
                     }
@@ -220,7 +289,7 @@
             searchingPerformers = true;
 
             var searchTerm = document.getElementById("performerSearchBox").value;
-            searchTerm = searchTerm.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'¡]/gi, '').toLowerCase();
+            searchTerm = searchTerm.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'ยก]/gi, '').toLowerCase();
 
             Results = []
             for (recording of loadedCSV.data) {
@@ -229,7 +298,7 @@
                     if (!cast_to_search) {
                         continue;
                     }
-                    cast_to_search = cast_to_search.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'¡]/gi, '').toLowerCase();
+                    cast_to_search = cast_to_search.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'ยก]/gi, '').toLowerCase();
                     if (cast_to_search.includes(searchTerm)) {
                         addRecordingExtras(recording);
                         Results.push(recording);
@@ -441,6 +510,7 @@
                         weekday: undefined,
                         year: 'numeric',
                         month: 'long',
+                        day: 'numeric'
                         day: 'numeric',
                         timeZone: 'UTC'
                     };
@@ -460,6 +530,24 @@
         }
 
     </script>
+	
+	    <div id="footer" class="row mt-3">
+        <div class="container">
+            <div class="col align-self-center">
+                <h6 class="text-center">
+                    <i class="far fa-copyright"></i>
+                    2020 Encora and of the respective rightsholders.
+                </h6>
+                <div class="text-center">
+                    Developed by <a href="https://reddit.com/u/7-hoursbehind">7hoursbehind</a> and <a href="https://reddit.com/u/Zagon__">Zagon</a>
+                </div>
+				<div class="text-center">
+				<i class="fab fa-github"></i> <a href="https://github.com/sevenhoursbehind/encora-rec-viewer">Source</a>
+				</div>
+            </div>
+        </div>
+    </div>
+	
 </body>
 
 </html>
