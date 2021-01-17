@@ -113,8 +113,7 @@
     <div id='resultsTitle'></div>
     <div id="showResults"></div>
 
-    <script>
-		// here's where the magic happens, all thanks to someone who is 7 hours behind.
+        <script>
         var loadedCSV = {};
 
         // searching productions
@@ -206,22 +205,14 @@
                         `;
 
         function loadfile() {
-            Papa.parse("https://encora.zagon.pe/recordings_2020-12-31.csv", {
-                                download: true,
+            //Papa.parse("recordings.csv", {
+            Papa.parse(document.getElementById("upload").files[0], {
+                //                download: true,
                 header: true,
                 encoding: "UTF-8",
                 complete: parseComplete // called when CSV has been converted to JSON
             });
-      // original offline recorging viewer }
-               // function loadfile() {
-            //Papa.parse("recordings.csv", {
-            // Papa.parse(document.getElementById("upload").files[0], {
-                //                download: true,
-               // header: true,
-               // encoding: "UTF-8",
-               // complete: parseComplete 
-           // });
-        //}
+        }
 
         function parseComplete(w) {
             console.log(w);
@@ -510,7 +501,6 @@
                         weekday: undefined,
                         year: 'numeric',
                         month: 'long',
-                        day: 'numeric'
                         day: 'numeric',
                         timeZone: 'UTC'
                     };
