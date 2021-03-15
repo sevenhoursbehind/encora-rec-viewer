@@ -17,8 +17,7 @@
     <b>Encora Recordings Viewer</b>
     <br />
     <i>thrown together by u/7-hoursbehind</i>
-    <br />
-    NB: bug with dates being off by one day should now be fixed!
+    <br /> NB: bug with dates being off by one day should now be fixed!
 
     <br />
     <br />
@@ -46,6 +45,10 @@
     <button type='button' id='showAll' onclick='showResults(true, true)'>Show All</button>
     <button type='button' id='showVideosOnly' onclick='showResults(true, false)'>Show Videos Only</button>
     <button type='button' id='showAudiosOnly' onclick='showResults(false, true)'>Show Audios Only</button>
+    <button type='button' id='sortByDateDesc' onclick='setDateSortMode(false)'>Sort By Date (desc)</button>
+    <button type='button' id='sortByDateAsc' onclick='setDateSortMode(true)'>Sort By Date (asc)</button>
+    <button type='button' id='sortByToursAfterDates' onclick='setTourSortMode(false)'>Sort By Tour After Date</button>
+    <button type='button' id='sortByToursBeforeDates' onclick='setTourSortMode(true)'>Sort By Tour Before Date</button>
 
     <br />
     <br />
@@ -66,6 +69,11 @@
 
         var searchingPerformers = false;
 
+        var sortDatesAscending = true;
+        var sortToursBeforeDates = true;
+        var showingVideos = true;
+        var showingAudios = true;
+
         var productionsTemplate = `
                 <% for (production of productionResults) { %>
                     <a href="#" onclick="showProductionTours('<%= production.replaceAll("'", "&apos;") %>');return false;"><%= production %></a>
@@ -77,6 +85,7 @@
                 <% for (production of productionResults) { %>
                     <a href="#" onclick="showPerformerProductionResults('<%= production.replaceAll("'", "&apos;") %>');return false;"><%= production %></a>
                     (<%= productionToResults[production].length %>)
+                    <i>(<%= videoCounts[production] %> videos, <%= productionToResults[production].length-videoCounts[production] %> audios)</i>
                     <br>
                 <% } %>
             `;
@@ -133,6 +142,17 @@
                                           }; return false;">
                                     <b>Raw Date:</b></a>
                                     <span id='<%= 'date' + recording.recording_id %>' style='display: none;'>&nbsp;<%- recording.original_date %></span>
+                                <% } %>
+                                <% if (recording.recording_id != "") { %>
+                                    <br>
+                                    <a href="#" onclick="var x = document.getElementById('<%= 'recid' + recording.recording_id %>');
+                                        if (x.style.display === 'none') {
+                                            x.style.display = 'inline';
+                                          } else {
+                                            x.style.display = 'none';
+                                          }; return false;">
+                                    <b>Recording ID:</b></a>
+                                    <span id='<%= 'recid' + recording.recording_id %>' style='display: none;'>&nbsp;<%- recording.recording_id %></span>
                                 <% } %>
     
                                 <hr>
@@ -217,6 +237,7 @@
             var searchTerm = document.getElementById("performerSearchBox").value;
             searchTerm = searchTerm.replace(/[\.,-\/#!$%\^\*;:{}=\-_`~()"'¡]/gi, '').toLowerCase();
 
+            var productionVideoCounts = {};
             Results = []
             for (recording of loadedCSV.data) {
                 if (recording) {
@@ -239,27 +260,31 @@
             }
 
             //            showPerformerResults(true, true);
-            buildPerformerProductionToResults();
-            showPerformerProductions();
+            buildPerformerProductionToResults(productionVideoCounts);
+            showPerformerProductions(productionVideoCounts);
         }
 
         // build a map of production -> recordings for all the recording Results for this perfomer
-        function buildPerformerProductionToResults() {
+        function buildPerformerProductionToResults(productionVideoCounts) {
             PerformerProductionToResults = {};
             for (recording of Results) {
                 if (recording && recording.production) {
                     var production = recording.production;
                     if (!PerformerProductionToResults[production]) {
                         PerformerProductionToResults[production] = [];
+                        productionVideoCounts[production] = 0;
                     }
 
                     PerformerProductionToResults[production].push(recording);
+                    if (recording.video == '1') {
+                        productionVideoCounts[production] += 1;
+                    }
                 }
             }
         }
 
         // show a list of all Productions that have performance casts matching the performer search
-        function showPerformerProductions() {
+        function showPerformerProductions(productionVideoCounts) {
             var productionResults = Object.keys(PerformerProductionToResults);
 
             if (productionResults.length <= 0) {
@@ -268,9 +293,12 @@
                 return;
             }
 
+            productionResults = productionResults.sort();
+
             var productionsHtml = ejs.render(performerProductionsTemplate, {
                 productionResults: productionResults,
-                productionToResults: PerformerProductionToResults
+                productionToResults: PerformerProductionToResults,
+                videoCounts: productionVideoCounts
             });
 
             document.getElementById("showResults").innerHTML = productionsHtml;
@@ -280,6 +308,7 @@
         // search for all tours of production, render a clickable list of tours
         function showProductionTours(production) {
             Results = {};
+            var tourVideoCounts = {}
             var tours = new Set();
             //            var production;
             for (recording of loadedCSV.data) {
@@ -287,11 +316,16 @@
                     if (!tours.has(recording.tour)) {
                         tours.add(recording.tour);
                         Results[recording.tour] = [];
+                        tourVideoCounts[recording.tour] = 0;
                     }
                     Results[recording.tour].push(recording);
                     tours.add(recording.tour);
+                    if (recording.video == '1') {
+                        tourVideoCounts[recording.tour] += 1;
+                    }
                 }
             }
+
             if (tours.size <= 0) {
                 document.getElementById("showResults").innerHTML = "No tours found :(";
                 document.getElementById("resultsTitle").innerHTML = "";
@@ -305,9 +339,11 @@
             `;
 
             var toursTemplate = `
+                <a href="#" onclick="showAllToursTogether();return false;">Show Recordings From All Tours</a>
+                <br><br>
                 <% for (tour of tours) { %>
                    <a href="#" onclick="searchInTour('<%= production.replaceAll("'", "&apos;") %>', '<%= tour.replaceAll("'", "&apos;") %>');return false;"><%= tour %></a>
-                    (<%= results[tour].length %>)
+                    (<%= results[tour].length %>) <i>(<%= tourVideoCounts[tour] %> videos, <%= results[tour].length-tourVideoCounts[tour] %> audios)</i>
                     <br>
                 <% } %>
             `;
@@ -315,7 +351,8 @@
             var toursHtml = ejs.render(toursTemplate, {
                 tours: tours,
                 production: production,
-                results: Results
+                results: Results,
+                tourVideoCounts: tourVideoCounts
             });
 
             var titleHtml = ejs.render(titleTemplate, {
@@ -335,19 +372,35 @@
                 addRecordingExtras(recording);
             }
 
-            showTourResults(true, true);
+            showTourResults(true, true, true);
+        }
+
+        // show all the recordings for a production at once
+        function showAllToursTogether() {
+            FinalResults = [];
+            for (var tour in Results) {
+                for (var rec of Results[tour]) {
+                    addRecordingExtras(rec);
+                    FinalResults.push(rec);
+                }
+            }
+
+            showTourResults(true, true, false);
         }
 
         function showResults(videos, audios) {
+            showingVideos = videos;
+            showingAudios = audios;
+
             if (searchingPerformers) {
                 showPerformerResults(videos, audios);
             } else {
-                showTourResults(videos, audios);
+                showTourResults(videos, audios, false);
             }
         }
 
         // render list of recordings
-        function showTourResults(videos, audios) {
+        function showTourResults(videos, audios, updateTourTitle) {
             var renderResults = filterAndSortResults(videos, audios);
 
             var titleTemplate = `
@@ -358,7 +411,7 @@
             var titleHtml = ejs.render(titleTemplate, {
                 results: renderResults,
                 production: FinalResults[0].production,
-                tour: FinalResults[0].tour
+                tour: updateTourTitle ? FinalResults[0].tour : ""
             });
 
             var resultsHtml = ejs.render(recordingTemplate, {
@@ -390,10 +443,28 @@
             document.getElementById("resultsTitle").innerHTML = "";
         }
 
+        function setDateSortMode(mode) {
+            sortDatesAscending = mode;
+            showResults(showingVideos, showingAudios);
+        }
+
+        function setTourSortMode(mode) {
+            sortToursBeforeDates = mode;
+            showResults(showingVideos, showingAudios);
+        }
+
         function filterAndSortResults(vid, aud) {
-            FinalResults.sort((a, b) => ((a.production.localeCompare(b.production)) ||
-                (a.tour.localeCompare(b.tour)) ||
-                (a.date.localeCompare(b.date))));
+
+            var dateSortMultiplier = sortDatesAscending ? 1 : -1;
+            if (sortToursBeforeDates) {
+                FinalResults.sort((a, b) => ((a.production.localeCompare(b.production)) ||
+                    (a.tour.localeCompare(b.tour)) ||
+                    dateSortMultiplier * (a.date.localeCompare(b.date))));
+            } else {
+                FinalResults.sort((a, b) => ((a.production.localeCompare(b.production)) ||
+                    dateSortMultiplier * (a.date.localeCompare(b.date)) ||
+                    (a.tour.localeCompare(b.tour))));
+            }
 
             var res = FinalResults;
 
